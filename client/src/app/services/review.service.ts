@@ -1,70 +1,147 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { Review, CreateReviewRequest } from '../models/review.model';
 import { environment } from '../../environments/environment';
-
-interface AuthResponse {
-  token: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
 
 @Injectable({
   providedIn: 'root'
 })
-export class AuthService {
-  private apiUrl = `${environment.apiUrl}/auth`;
-  private currentUserSubject = new BehaviorSubject<any>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
+export class ReviewService {
+  private apiUrl = `${environment.apiUrl}/reviews`;
 
-  constructor(private http: HttpClient) {
-    const user = this.getUserFromStorage();
-    if (user) {
-      this.currentUserSubject.next(user);
+  constructor(private http: HttpClient) {}
+
+
+  getMovieReviews(movieId: string): Observable<Review[]> {
+    return this.http.get<Review[]>(`${this.apiUrl}/movie/${movieId}`).pipe(
+      map(reviews => reviews.map(review => ({
+        ...review,
+        createdAt: new Date(review.createdAt)
+      }))),
+      catchError(this.handleError)
+    );
+  }
+
+  
+  getUserReviews(userId: string): Observable<Review[]> {
+    return this.http.get<Review[]>(`${this.apiUrl}/user/${userId}`).pipe(
+      map(reviews => reviews.map(review => ({
+        ...review,
+        createdAt: new Date(review.createdAt)
+      }))),
+      catchError(this.handleError)
+    );
+  }
+
+ 
+  createReview(review: CreateReviewRequest): Observable<Review> {
+    return this.http.post<Review>(this.apiUrl, review).pipe(
+      map(createdReview => ({
+        ...createdReview,
+        createdAt: new Date(createdReview.createdAt)
+      })),
+      catchError(this.handleError)
+    );
+  }
+
+ 
+  getReview(reviewId: string): Observable<Review> {
+    return this.http.get<Review>(`${this.apiUrl}/${reviewId}`).pipe(
+      map(review => ({
+        ...review,
+        createdAt: new Date(review.createdAt)
+      })),
+      catchError(this.handleError)
+    );
+  }
+
+ 
+  updateReview(reviewId: string, reviewData: Partial<CreateReviewRequest>): Observable<Review> {
+    return this.http.put<Review>(`${this.apiUrl}/${reviewId}`, reviewData).pipe(
+      map(updatedReview => ({
+        ...updatedReview,
+        createdAt: new Date(updatedReview.createdAt)
+      })),
+      catchError(this.handleError)
+    );
+  }
+
+ 
+  deleteReview(reviewId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${reviewId}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  
+  calculateAverageRating(reviews: Review[]): number {
+    if (reviews.length === 0) {
+      return 0;
     }
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return Math.round((sum / reviews.length) * 10) / 10;
   }
 
-  register(userData: any): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData)
-      .pipe(tap(response => this.handleAuth(response)));
+  hasUserReviewedMovie(movieId: string, userId: string): Observable<boolean> {
+    return this.getUserReviews(userId).pipe(
+      map(reviews => reviews.some(review => review.movieId === movieId)),
+      catchError(() => {
+        return [false];
+      })
+    );
   }
 
-  login(credentials: any): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials)
-      .pipe(tap(response => this.handleAuth(response)));
+  
+  getReviewsCount(movieId: string): Observable<number> {
+    return this.getMovieReviews(movieId).pipe(
+      map(reviews => reviews.length),
+      catchError(() => {
+        return [0];
+      })
+    );
   }
 
-  logout(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    this.currentUserSubject.next(null);
+ 
+  getRatingDistribution(movieId: string): Observable<{ [key: number]: number }> {
+    return this.getMovieReviews(movieId).pipe(
+      map(reviews => {
+        const distribution: { [key: number]: number } = {
+          1: 0,
+          2: 0,
+          3: 0,
+          4: 0,
+          5: 0
+        };
+        
+        reviews.forEach(review => {
+          distribution[review.rating]++;
+        });
+        
+        return distribution;
+      }),
+      catchError(this.handleError)
+    );
   }
 
-  isLoggedIn(): boolean {
-    return !!this.getToken();
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem('token');
-  }
-
-  getUserName(): string {
-    const user = this.getUserFromStorage();
-    return user?.name || '';
-  }
-
-  private handleAuth(response: AuthResponse): void {
-    localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(response.user));
-    this.currentUserSubject.next(response.user);
-  }
-
-  private getUserFromStorage(): any {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+  /**
+   * Handle HTTP errors
+   * @param error - The error object
+   * @returns Observable error
+   */
+  private handleError(error: any): Observable<never> {
+    let errorMessage = 'An error occurred';
+    
+    if (error.error instanceof ErrorEvent) {
+      // Client-side error
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // Server-side error
+      errorMessage = error.error?.message || `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+    
+    console.error('ReviewService Error:', errorMessage);
+    return throwError(() => new Error(errorMessage));
   }
 }

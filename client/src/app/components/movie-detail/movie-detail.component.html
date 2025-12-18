@@ -1,1 +1,158 @@
-<p>movie-detail works!</p>
+<div class="movie-detail-wrapper">
+  
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading movie details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <div class="alert alert-danger">
+      <i class="error-icon">⚠️</i>
+      <p>{{ errorMessage }}</p>
+      <button class="btn btn-primary" (click)="goBack()">Back to Movies</button>
+    </div>
+  </div>
+
+  <!-- Movie Details -->
+  <div *ngIf="!isLoading && !errorMessage && movie" class="movie-detail-container">
+    
+    <!-- Back Button -->
+    <button class="back-button" (click)="goBack()">
+      <span class="back-arrow">←</span>
+      Back to Movies
+    </button>
+
+    <!-- Movie Header Section -->
+    <div class="movie-header">
+      <!-- Poster -->
+      <div class="movie-poster-section">
+        <img 
+          [src]="movie.posterUrl || 'assets/images/default-poster.jpg'" 
+          [alt]="movie.title"
+          class="movie-poster"
+          (error)="$any($event.target).src='assets/images/default-poster.jpg'">
+      </div>
+
+      <!-- Main Info -->
+      <div class="movie-info-section">
+        <h1 class="movie-title">{{ movie.title }}</h1>
+        
+        <div class="movie-meta">
+          <span class="meta-item">
+            <strong>Director:</strong> {{ movie.director }}
+          </span>
+          <span class="meta-divider">•</span>
+          <span class="meta-item">
+            <strong>Year:</strong> {{ movie.year }}
+          </span>
+        </div>
+
+        <!-- Genres -->
+        <div class="genres-container">
+          <span *ngFor="let genre of movie.genre" class="genre-tag">
+            {{ genre }}
+          </span>
+        </div>
+
+        <!-- Average Rating -->
+        <div *ngIf="reviews.length > 0" class="rating-section">
+          <div class="rating-display">
+            <div class="rating-number" [style.color]="getRatingColor(averageRating)">
+              {{ averageRating }}
+            </div>
+            <div class="rating-stars">
+              <!-- Full Stars -->
+              <span *ngFor="let star of getFullStars(averageRating)" class="star filled">
+                ★
+              </span>
+              <!-- Half Star -->
+              <span *ngIf="hasHalfStar(averageRating)" class="star half">
+                ★
+              </span>
+              <!-- Empty Stars -->
+              <span *ngFor="let star of getEmptyStars(averageRating)" class="star empty">
+                ★
+              </span>
+            </div>
+          </div>
+          <p class="review-count">Based on {{ reviews.length }} review{{ reviews.length !== 1 ? 's' : '' }}</p>
+        </div>
+
+        <div *ngIf="reviews.length === 0" class="no-rating">
+          <p>No ratings yet. Be the first to review!</p>
+        </div>
+
+        <!-- Description -->
+        <div class="movie-description">
+          <h3>Synopsis</h3>
+          <p>{{ movie.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="reviews-section">
+      <div class="reviews-header">
+        <h2>User Reviews</h2>
+        <button 
+          class="btn btn-primary write-review-btn" 
+          (click)="toggleReviewForm()">
+          <span *ngIf="!showReviewForm">✍️ Write a Review</span>
+          <span *ngIf="showReviewForm">✖ Cancel</span>
+        </button>
+      </div>
+
+      <!-- Review Form -->
+    <div *ngIf="showReviewForm && isLoggedIn" class="review-form-wrapper">
+        <app-review-form [movieId]="movie._id" (reviewSubmitted)="onReviewSubmitted()">
+      </app-review-form>
+    </div>
+
+      <!-- Reviews List -->
+      <div class="reviews-list">
+        <div *ngIf="reviews.length === 0" class="no-reviews">
+          <div class="empty-state">
+            <span class="empty-icon">📝</span>
+            <h3>No reviews yet</h3>
+            <p>Be the first to share your thoughts about this movie!</p>
+            <button 
+              *ngIf="!showReviewForm" 
+              class="btn btn-primary" 
+              (click)="toggleReviewForm()">
+              Write First Review
+            </button>
+          </div>
+        </div>
+
+        <!-- Individual Review Cards -->
+        <div *ngFor="let review of reviews" class="review-card">
+          <div class="review-header">
+            <div class="reviewer-info">
+              <div class="avatar">{{ review.userId.username.charAt(0).toUpperCase() }}</div>
+              <div class="reviewer-details">
+                <span class="reviewer-name">{{ review.userId.username }}</span>
+                <span class="review-date">{{ formatDate(review.createdAt) }}</span>
+              </div>
+            </div>
+            
+            <div class="review-rating">
+              <span 
+                *ngFor="let star of getStarsArray(review.rating)" 
+                class="star"
+                [class.filled]="star">
+                ★
+              </span>
+            </div>
+          </div>
+
+          <div class="review-body">
+            <p class="review-text">{{ review.reviewText }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
