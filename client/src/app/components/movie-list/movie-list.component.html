@@ -1,0 +1,39 @@
+<div class="movie-list-container">
+  <h1>Movies</h1>
+  
+  <div class="search-bar">
+    <input 
+      type="text" 
+      [(ngModel)]="searchTerm" 
+      placeholder="Search movies..."
+      class="search-input"
+    />
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading movies...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div class="movies-grid">
+    <div 
+      *ngFor="let movie of filteredMovies" 
+      class="movie-card"
+      (click)="viewDetails(movie._id)"
+    >
+      <img 
+        [src]="movie.posterUrl || 'assets/no-poster.jpg'" 
+        [alt]="movie.title"
+        class="movie-poster"
+      />
+      <div class="movie-info">
+        <h3>{{ movie.title }}</h3>
+        <p class="genre">{{ movie.genre }}</p>
+        <p class="year">{{ movie.releaseYear }}</p>
+        <p class="director">Dir: {{ movie.director }}</p>
+        <div *ngIf="movie.rating" class="rating">
+           {{ movie.rating | number:'1.1-1' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,21 @@
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="logo" (click)="navigateHome()">
+      <span class="logo-icon">🎬</span>
+      <h2 class="logo-text">MovieReviews</h2>
+    </div>
+    <div class="nav-links">
+      <a routerLink="/movies" routerLinkActive="active" [routerLinkActiveOptions]="{exact: false}">
+        Movies
+      </a>
+      <ng-container *ngIf="!isLoggedIn()">
+        <a routerLink="/login" routerLinkActive="active">Login</a>
+        <a routerLink="/register" routerLinkActive="active" class="register-btn">Register</a>
+      </ng-container>
+      <ng-container *ngIf="isLoggedIn()">
+        <span class="user-greeting">Hello, <strong>{{ getUserName() }}</strong></span>
+        <button (click)="logout()" class="logout-btn">Logout</button>
+      </ng-container>
+    </div>
+  </div>
+</nav>
