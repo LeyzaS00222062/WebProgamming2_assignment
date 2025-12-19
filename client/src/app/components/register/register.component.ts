@@ -37,6 +37,9 @@ export class RegisterComponent {
     this.submitted = true;
     if (this.registerForm.invalid) return;
 
+    // checking data
+    console.log('Sending registration data:', this.registerForm.value);
+
     this.loading = true;
     this.authService.register(this.registerForm.value).subscribe({
       next: () => {

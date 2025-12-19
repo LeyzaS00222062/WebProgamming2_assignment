@@ -9,7 +9,6 @@
   <!-- Error State -->
   <div *ngIf="errorMessage && !isLoading" class="error-container">
     <div class="alert alert-danger">
-      <i class="error-icon">⚠️</i>
       <p>{{ errorMessage }}</p>
       <button class="btn btn-primary" (click)="goBack()">Back to Movies</button>
     </div>
@@ -99,7 +98,7 @@
         <button 
           class="btn btn-primary write-review-btn" 
           (click)="toggleReviewForm()">
-          <span *ngIf="!showReviewForm">✍️ Write a Review</span>
+          <span *ngIf="!showReviewForm"> Write a Review</span>
           <span *ngIf="showReviewForm">✖ Cancel</span>
         </button>
       </div>
@@ -114,7 +113,6 @@
       <div class="reviews-list">
         <div *ngIf="reviews.length === 0" class="no-reviews">
           <div class="empty-state">
-            <span class="empty-icon">📝</span>
             <h3>No reviews yet</h3>
             <p>Be the first to share your thoughts about this movie!</p>
             <button 

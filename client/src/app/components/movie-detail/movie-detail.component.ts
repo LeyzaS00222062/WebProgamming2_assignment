@@ -49,6 +49,20 @@ export class MovieDetailComponent implements OnInit {
         this.loadReviews(movieId);
       }
     });
+
+    const id = this.route.snapshot.paramMap.get('id');
+    
+    if (id) {
+    this.movieService.getMovieById(id).subscribe({
+      next: (data) => {
+        console.log('Movie data received:', data); 
+        this.movie = data;
+      },
+      error: (error) => {
+        console.error('Error fetching movie:', error); 
+      }
+    });
+  }
   }
 
   loadMovieDetails(movieId: string): void {
@@ -140,4 +154,7 @@ export class MovieDetailComponent implements OnInit {
     if (rating >= 3) return '#f39c12';
     return '#e74c3c';
   }
+
+  
 }
+
